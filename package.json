@@ -1,17 +1,26 @@
 {
   "name": "mapbox-layer-manager",
   "version": "1.0.0",
-  "description": "A utility for managing Mapbox basemap layers",
+  "type": "module",
   "main": "dist/mapboxLayerManager.js",
+  "exports": {
+    ".": "./dist/mapboxLayerManager.js"
+  },
+  "description": "A utility for managing Mapbox basemap layers",
   "scripts": {
     "build": "babel src -d dist",
     "prepublishOnly": "npm run build"
   },
-  "keywords": ["mapbox", "basemap", "switch", "layers"],
+  "keywords": [
+    "mapbox",
+    "basemap",
+    "switch",
+    "layers"
+  ],
   "author": "MarpleK",
   "license": "MIT",
   "peerDependencies": {
-    "mapbox-gl": "^2.0.0"
+    "mapbox-gl": "^2.15.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.25.6",

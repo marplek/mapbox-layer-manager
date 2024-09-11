@@ -7,28 +7,27 @@ export class MapboxLayerManager {
    * @param {Object} options - Configuration options
    * @param {Object} options.mapboxgl - Mapbox GL JS library
    * @param {Object} options.styles - Map styles
-   * @param {string} [options.customAccessToken] - Custom Mapbox access token
-   * @param {string} [options.customGlyphsUrl] - Custom glyphs URL
-   * @param {string} [options.customSpriteUrl] - Custom sprite URL
+   * @param {string} [options.mapboxAccessToken] - Custom Mapbox access token
+   * @param {string} [options.glyphs] - Custom glyphs URL
+   * @param {string} [options.sprite] - Custom sprite URL
    * @param {Object} [options.customBlankStyle] - Custom blank style
    */
   constructor({
     mapboxgl,
     styles,
-    customAccessToken = null,
-    customGlyphsUrl = null,
-    customSpriteUrl = null,
+    mapboxAccessToken = null,
+    glyphs = null,
+    sprite = null,
     customBlankStyle = null,
   }) {
     this._mapboxgl = mapboxgl;
     this._styles = styles;
     this._mapboxgl.accessToken =
-      customAccessToken || import.meta.env.VITE_UserAccessToken;
-    this._glyphsUrl =
-      customGlyphsUrl || "mapbox://fonts/mapbox/{fontstack}/{range}.pbf";
+      mapboxAccessToken || import.meta.env.VITE_mapboxAccessToken;
+    this._glyphsUrl = glyphs || "mapbox://fonts/mapbox/{fontstack}/{range}.pbf";
     this._customBlankStyle = customBlankStyle;
     this._addedLayerIds = {};
-    this._spriteUrl = customSpriteUrl;
+    this._spriteUrl = sprite;
     this._originalAddLayer = null;
     this._layerInsertionOrder = {
       fill: "polygon-layer",
@@ -75,8 +74,7 @@ export class MapboxLayerManager {
       ...options,
     });
 
-    mapboxMap.addControl(new this._mapboxgl.NavigationControl());
-
+    this._originalAddLayer = mapboxMap.addLayer.bind(mapboxMap);
     await new Promise((resolve) => mapboxMap.on("load", resolve));
     this._addIdentificationBlankLayer(mapboxMap);
     await this._loadBaseMapLayersVisible(mapboxMap, defaultStyle);
@@ -93,7 +91,6 @@ export class MapboxLayerManager {
       },
     });
 
-    this._originalAddLayer = mapboxMap.addLayer.bind(mapboxMap);
     return proxyMap;
   }
 
