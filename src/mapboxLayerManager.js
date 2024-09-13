@@ -43,22 +43,6 @@ export class MapboxLayerManager {
   }
 
   /**
-   * Gets the IDs of added layers.
-   * @returns {Object} An object containing layer IDs grouped by style
-   */
-  get addedLayerIds() {
-    return this._addedLayerIds;
-  }
-
-  /**
-   * Gets the current styles.
-   * @returns {Object} The current styles object
-   */
-  get styles() {
-    return this._styles;
-  }
-
-  /**
    * Creates a new map instance.
    * @param {Object} options - Map creation options
    * @param {HTMLElement} options.container - The container element
@@ -95,12 +79,154 @@ export class MapboxLayerManager {
   }
 
   /**
+   * Changes the current base map style.
+   * @param {Object} map - The Mapbox map instance
+   * @param {string} newStyle - The name of the new style to apply
+   * @returns {Promise<void>}
+   */
+  async changeBaseMap(map, newStyle) {
+    if (!this._addedLayerIds[newStyle]) {
+      this._addedLayerIds[newStyle] = [];
+    }
+    this._toggleBaseMapVisibility(map, newStyle);
+  }
+
+  /**
+   * Gets the IDs of added layers.
+   * @param {Object} map - The Mapbox map instance (not used in this method, but kept for consistency)
+   * @returns {Object} An object containing layer IDs grouped by style
+   */
+  getAddedLayerIds(map) {
+    return this._addedLayerIds;
+  }
+
+  /**
+   * Gets the current styles.
+   * @param {Object} map - The Mapbox map instance (not used in this method, but kept for consistency)
+   * @returns {Object} The current styles object
+   */
+  getStyles(map) {
+    return this._styles;
+  }
+
+  /**
+   * Gets all layer IDs from the map.
+   * @param {Object} map - The Mapbox map instance
+   * @returns {Array<string>} An array of all layer IDs
+   */
+  getAllLayerIds(map) {
+    return map.getStyle().layers.map((layer) => layer.id);
+  }
+
+  /**
+   * Gets non-basemap layer IDs from the map.
+   * @param {Object} map - The Mapbox map instance
+   * @returns {Array<string>} An array of non-basemap layer IDs
+   */
+  getNonBasemapLayerIds(map) {
+    const allLayers = map.getStyle().layers;
+    const addedLayerIds = Object.values(this._addedLayerIds).flat();
+    const indicatorLayers = [
+      "base-map",
+      "polygon-layer",
+      "line-layer",
+      "point-layer",
+    ];
+
+    return allLayers
+      .filter(
+        (layer) =>
+          !addedLayerIds.includes(layer.id) &&
+          !indicatorLayers.includes(layer.id)
+      )
+      .map((layer) => layer.id);
+  }
+
+  /**
+   * Gets visible layer IDs from the map.
+   * @param {Object} map - The Mapbox map instance
+   * @returns {Array<string>} An array of visible layer IDs
+   */
+  getVisibleLayerIds(map) {
+    return map
+      .getStyle()
+      .layers.filter(
+        (layer) => map.getLayoutProperty(layer.id, "visibility") !== "none"
+      )
+      .map((layer) => layer.id);
+  }
+
+  /**
+   * Gets visible non-basemap layer IDs from the map.
+   * @param {Object} map - The Mapbox map instance
+   * @returns {Array<string>} An array of visible non-basemap layer IDs
+   */
+  getVisibleNonBasemapLayerIds(map) {
+    const allLayers = map.getStyle().layers;
+    const addedLayerIds = Object.values(this._addedLayerIds).flat();
+    const indicatorLayers = [
+      "base-map",
+      "polygon-layer",
+      "line-layer",
+      "point-layer",
+    ];
+
+    return allLayers
+      .filter((layer) => {
+        const isNonBasemap =
+          !addedLayerIds.includes(layer.id) &&
+          !indicatorLayers.includes(layer.id);
+        const visibility = map.getLayoutProperty(layer.id, "visibility");
+        const isVisible = visibility !== "none";
+        return isNonBasemap && isVisible;
+      })
+      .map((layer) => layer.id);
+  }
+
+  /**
+   * Prints the order of layers in the map, grouped by layer type.
+   * This method is useful for debugging and understanding the current state of the map's layers.
+   *
+   * @param {Object} map - The Mapbox map instance
+   * @public
+   */
+  printLayerOrder(map) {
+    const layers = map.getStyle().layers;
+    const layerGroups = {
+      basemap: [],
+      point: [],
+      line: [],
+      polygon: [],
+    };
+
+    const addedLayerIds = Object.values(this._addedLayerIds).flat();
+
+    layers.forEach((layer) => {
+      if (addedLayerIds.includes(layer.id)) {
+        layerGroups.basemap.push(layer.id);
+      } else if (this._isPointLayer(layer)) {
+        layerGroups.point.push(layer.id);
+      } else if (this._isLineLayer(layer)) {
+        layerGroups.line.push(layer.id);
+      } else if (this._isPolygonLayer(layer)) {
+        layerGroups.polygon.push(layer.id);
+      }
+    });
+
+    console.log("Layer Order:");
+    console.log("Point layers:", layerGroups.point.join(", "));
+    console.log("Line layers:", layerGroups.line.join(", "));
+    console.log("Polygon layers:", layerGroups.polygon.join(", "));
+    console.log("Basemap layers:", layerGroups.basemap.join(", "));
+  }
+
+  /**
    * Loads base map layers for a specific style.
    * @param {Object} map - The Mapbox map instance
    * @param {string} styleName - The name of the style to load
    * @returns {Promise<void>}
    */
-  async loadBaseMapLayers(map, styleName) {
+  async _loadBaseMapLayers(map, styleName) {
     if (!this._addedLayerIds[styleName]) {
       this._addedLayerIds[styleName] = [];
     }
@@ -117,26 +243,13 @@ export class MapboxLayerManager {
    */
   async _loadBaseMapLayersVisible(map, defaultStyle) {
     for (const styleName of Object.keys(this._styles)) {
-      await this.loadBaseMapLayers(map, styleName);
+      await this._loadBaseMapLayers(map, styleName);
       if (styleName !== defaultStyle) {
         this._addedLayerIds[styleName].forEach((layerId) => {
           map.setLayoutProperty(layerId, "visibility", "none");
         });
       }
     }
-  }
-
-  /**
-   * Changes the current base map style.
-   * @param {Object} map - The Mapbox map instance
-   * @param {string} newStyle - The name of the new style to apply
-   * @returns {Promise<void>}
-   */
-  async changeBaseMap(map, newStyle) {
-    if (!this._addedLayerIds[newStyle]) {
-      this._addedLayerIds[newStyle] = [];
-    }
-    this._toggleBaseMapVisibility(map, newStyle);
   }
 
   /**
@@ -333,48 +446,13 @@ export class MapboxLayerManager {
   }
 
   /**
-   * Prints the order of layers in the map, grouped by layer type.
-   * This method is useful for debugging and understanding the current state of the map's layers.
-   *
-   * @param {Object} map - The Mapbox map instance
-   * @public
-   */
-  printLayerOrder(map) {
-    const layers = map.getStyle().layers;
-    const layerGroups = {
-      basemap: [],
-      point: [],
-      line: [],
-      polygon: [],
-    };
-
-    layers.forEach((layer) => {
-      if (layer.id.startsWith("base-map")) {
-        layerGroups.basemap.push(layer.id);
-      } else if (this._isPointLayer(layer)) {
-        layerGroups.point.push(layer.id);
-      } else if (this._isLineLayer(layer)) {
-        layerGroups.line.push(layer.id);
-      } else if (this._isPolygonLayer(layer)) {
-        layerGroups.polygon.push(layer.id);
-      }
-    });
-
-    console.log("Layer Order:");
-    console.log("Basemap layers:", layerGroups.basemap.join(", "));
-    console.log("Point layers:", layerGroups.point.join(", "));
-    console.log("Line layers:", layerGroups.line.join(", "));
-    console.log("Polygon layers:", layerGroups.polygon.join(", "));
-  }
-
-  /**
    * Checks if the layer is a point layer.
    * @param {Object} layer - The layer to check
    * @returns {boolean} True if the layer is a point layer, false otherwise
    * @private
    */
   _isPointLayer(layer) {
-    return ["symbol", "circle"].includes(layer.type);
+    return this._layerInsertionOrder[layer.type] === "point-layer";
   }
 
   /**
@@ -384,7 +462,7 @@ export class MapboxLayerManager {
    * @private
    */
   _isLineLayer(layer) {
-    return layer.type === "line";
+    return this._layerInsertionOrder[layer.type] === "line-layer";
   }
 
   /**
@@ -394,58 +472,7 @@ export class MapboxLayerManager {
    * @private
    */
   _isPolygonLayer(layer) {
-    return ["fill", "fill-extrusion"].includes(layer.type);
-  }
-
-  /**
-   * Gets all layer IDs from the map.
-   * @param {Object} map - The Mapbox map instance
-   * @returns {Array<string>} An array of all layer IDs
-   */
-  getAllLayerIds(map) {
-    return map.getStyle().layers.map((layer) => layer.id);
-  }
-
-  /**
-   * Gets non-basemap layer IDs from the map.
-   * @param {Object} map - The Mapbox map instance
-   * @returns {Array<string>} An array of non-basemap layer IDs
-   */
-  getNonBasemapLayerIds(map) {
-    return map
-      .getStyle()
-      .layers.filter((layer) => !layer.id.startsWith("base-map"))
-      .map((layer) => layer.id);
-  }
-
-  /**
-   * Gets visible layer IDs from the map.
-   * @param {Object} map - The Mapbox map instance
-   * @returns {Array<string>} An array of visible layer IDs
-   */
-  getVisibleLayerIds(map) {
-    return map
-      .getStyle()
-      .layers.filter(
-        (layer) => map.getLayoutProperty(layer.id, "visibility") !== "none"
-      )
-      .map((layer) => layer.id);
-  }
-
-  /**
-   * Gets visible non-basemap layer IDs from the map.
-   * @param {Object} map - The Mapbox map instance
-   * @returns {Array<string>} An array of visible non-basemap layer IDs
-   */
-  getVisibleNonBasemapLayerIds(map) {
-    return map
-      .getStyle()
-      .layers.filter(
-        (layer) =>
-          !layer.id.startsWith("base-map") &&
-          map.getLayoutProperty(layer.id, "visibility") !== "none"
-      )
-      .map((layer) => layer.id);
+    return this._layerInsertionOrder[layer.type] === "polygon-layer";
   }
 }
 

@@ -1,6 +1,6 @@
 {
   "name": "mapbox-layer-manager",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "main": "dist/mapboxLayerManager.js",
   "exports": {
@@ -20,7 +20,7 @@
   "author": "MarpleK",
   "license": "MIT",
   "peerDependencies": {
-    "mapbox-gl": "^2.15.0"
+    "mapbox-gl": "*"
   },
   "devDependencies": {
     "@babel/cli": "^7.25.6",
