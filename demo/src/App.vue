@@ -14,7 +14,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import mapboxgl from 'mapbox-gl';
-import { MapboxLayerManager } from '../../dist/mapboxLayerManager';
+import { MapboxLayerManager } from 'mapbox-layer-manager';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 const styles = {

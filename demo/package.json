@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "mapbox-gl": "^3.6.0",
-    "mapbox-layer-manager": "file:..",
+    "mapbox-layer-manager": "^1.0.2",
     "vue": "^3.4.37"
   },
   "devDependencies": {
