@@ -9,7 +9,9 @@
   "description": "A utility for managing Mapbox basemap layers",
   "scripts": {
     "build": "babel src -d dist",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "tsc": "tsc",
+    "test": "jest"
   },
   "keywords": [
     "mapbox",
@@ -26,5 +28,8 @@
     "@babel/cli": "^7.25.6",
     "@babel/core": "^7.25.2",
     "@babel/preset-env": "^7.25.4"
+  },
+  "dependencies": {
+    "@types/mapbox-gl": "^3.4.0"
   }
 }
