@@ -50,6 +50,7 @@ Layer Architecture Explanation:
 ## Demo
 
 We provide a sample project that demonstrates the main features and usage of MapboxLayerManager.
+[MapboxLayerManager Demo](https://your-username.github.io/mapbox-layer-manager/)
 
 ### Location
 
@@ -138,7 +139,7 @@ map.addLayer({
       data: { / GeoJSON data / }
    },
    paint: {
-   // 圖層樣式
+   // layer style
    }
 });
 ```
@@ -157,7 +158,7 @@ map.addSingleLayerToBasemap("satellite", {
   },
   "source-layer": "contour",
   paint: {
-    // 圖層樣式
+    // layer style
   },
 });
 ```

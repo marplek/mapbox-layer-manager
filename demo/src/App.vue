@@ -19,7 +19,10 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 
 const styles = {
   streets: `${import.meta.env.VITE_mapboxStyle}${import.meta.env.VITE_mapboxAccessToken}`,
-  satellite: [`${import.meta.env.VITE_satelliteStyle}${import.meta.env.VITE_mapboxAccessToken}`, 'http://localhost:5174/streets_road-v12.json'],
+  satellite: [
+    `${import.meta.env.VITE_satelliteStyle}${import.meta.env.VITE_mapboxAccessToken}`,
+    import.meta.env.VITE_STREETS_ROAD_URL
+  ],
   stdJP: import.meta.env.VITE_stdJP
 };
 
@@ -212,7 +215,6 @@ onMounted(async () => {
   });
   map.addControl(new mapboxgl.NavigationControl());
   addLayers();
-  console.log(map.getNonBasemapLayerIds());
 });
 
 onUnmounted(() => {
